@@ -5,7 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cost Manager - Chileplast</title>
-<link rel="icon" href="img/favicon.ico" type="image/x-icon">
+
+<link class="favicon" rel="icon" href="img/favicon.ico" type="image/x-icon">
+
 <style>
 :root{
   --azul:#08276f;--azul2:#0b3f99;--azul3:#1457b7;--celeste:#eaf6ff;--borde:#d7e3f2;--texto:#0f172a;--gris:#64748b;
@@ -13,11 +15,13 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7fbff;color:var(--texto);min-height:100vh}
+
+/* DISEÑO DE ESCRITORIO (Por defecto) */
 .app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
-.sidebar{background:linear-gradient(180deg,#ffffff,#edf7ff);border-right:1px solid var(--borde);padding:22px 18px;position:relative;overflow:hidden}
-.logoBox{background:white;border-radius:18px;padding:28px;box-shadow:var(--shadow);border:1px solid var(--borde);text-align:center;margin-bottom:24px;position:relative;z-index:2}
+.sidebar{background:linear-gradient(180deg,#ffffff,#edf7ff);border-right:1px solid var(--borde);padding:22px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:20px}
+.logoBox{background:white;border-radius:18px;padding:28px;box-shadow:var(--shadow);border:1px solid var(--borde);text-align:center;position:relative;z-index:2}
 .logoBox img{max-width:100%;height:auto;display:block;margin:0 auto}
-.mapaBox {margin-top:20px; text-align:center;}
+.mapaBox {margin-top:auto; text-align:center;} /* Mantiene el mapa abajo en PC */
 .mapaBox img {max-width:100%; border-radius:12px; border:1px solid var(--borde); box-shadow:var(--shadow);}
 .menuNav{display:flex;flex-direction:column;gap:8px;position:relative;z-index:2}
 .btnNav{display:flex;align-items:center;gap:12px;padding:12px 16px;background:transparent;border:none;border-radius:12px;color:var(--texto);font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all .2s}
@@ -62,6 +66,73 @@ tr:hover td{background:#f8fafc}
 #loginBox button:hover{background:#128c58;transform:translateY(-2px);box-shadow:0 8px 16px rgba(21,165,104,.3)}
 #msg{color:var(--rojo);font-size:14px;margin-top:16px;min-height:20px}
 .hidden{display:none !important}
+
+/* =========================================================================
+   ADAPTACIÓN PARA CELULARES Y PANTALLAS PEQUEÑAS (MEDIA QUERIES)
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Transforma la aplicación a una sola columna vertical */
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  /* La barra lateral pasa a ser una barra superior simple */
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--borde);
+    padding: 14px 20px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+  }
+
+  /* Reduce el tamaño excesivo de la caja del logo en celulares */
+  .logoBox {
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+  .logoBox img {
+    max-height: 35px;
+    width: auto;
+  }
+
+  /* Oculta por completo el mapa en teléfonos para optimizar espacio */
+  .mapaBox {
+    display: none !important;
+  }
+
+  /* Ajusta los espaciados del contenedor principal */
+  .main {
+    padding: 20px;
+  }
+
+  /* Transforma la grilla de cálculo de 2 columnas a 1 sola columna vertical */
+  .grid2 {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* Quita la posición fija del resumen para que fluya de forma natural */
+  .resBox {
+    position: static;
+    padding: 24px;
+  }
+
+  /* Reduce acolchados de tarjetas y tablas para pantallas chicas */
+  .card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  th, td {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
 </style>
 </head>
 <body>
@@ -187,7 +258,7 @@ async function login() {
     productos = parseSheetsCSV(csvText);
 
     document.getElementById('login').style.display = 'none';
-    cargar(); // Lanza las funciones matemáticas una vez descargados los datos
+    cargar();
 
   } catch (error) {
     console.error(error);
@@ -202,7 +273,6 @@ function parseSheetsCSV(text) {
     const line = lines[i].trim();
     if (!line) continue;
     const cells = [];
-    let currentCell = '';
     let insideQuotes = false;
     for (let j = 0; j < line.length; j++) {
       const char = line[j];
@@ -222,7 +292,7 @@ function parseSheetsCSV(text) {
 }
 
 // =========================================================================
-// 2. FUNCIONES MATEMÁTICAS Y CONTROL DE INTERFAZ (RESTURADAS)
+// 2. FUNCIONES MATEMÁTICAS Y CONTROL DE INTERFAZ
 // =========================================================================
 function money(n){ return '$' + Math.round(n).toLocaleString('es-CL'); }
 
