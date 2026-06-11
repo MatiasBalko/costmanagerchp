@@ -21,7 +21,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7fbff;color:va
 .sidebar{background:linear-gradient(180deg,#ffffff,#edf7ff);border-right:1px solid var(--borde);padding:22px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:20px}
 .logoBox{background:white;border-radius:18px;padding:28px;box-shadow:var(--shadow);border:1px solid var(--borde);text-align:center;position:relative;z-index:2}
 .logoBox img{max-width:100%;height:auto;display:block;margin:0 auto}
-.mapaBox {margin-top:auto; text-align:center;} /* Mantiene el mapa abajo en PC */
+.mapaBox {margin-top:auto; text-align:center;} 
 .mapaBox img {max-width:100%; border-radius:12px; border:1px solid var(--borde); box-shadow:var(--shadow);}
 .menuNav{display:flex;flex-direction:column;gap:8px;position:relative;z-index:2}
 .btnNav{display:flex;align-items:center;gap:12px;padding:12px 16px;background:transparent;border:none;border-radius:12px;color:var(--texto);font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all .2s}
@@ -67,71 +67,18 @@ tr:hover td{background:#f8fafc}
 #msg{color:var(--rojo);font-size:14px;margin-top:16px;min-height:20px}
 .hidden{display:none !important}
 
-/* =========================================================================
-   ADAPTACIÓN PARA CELULARES Y PANTALLAS PEQUEÑAS (MEDIA QUERIES)
-   ========================================================================= */
+/* ADAPTACIÓN CELULARES */
 @media (max-width: 768px) {
-  /* Transforma la aplicación a una sola columna vertical */
-  .app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    min-height: 100vh;
-  }
-
-  /* La barra lateral pasa a ser una barra superior simple */
-  .sidebar {
-    border-right: none;
-    border-bottom: 1px solid var(--borde);
-    padding: 14px 20px;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    background: #ffffff;
-  }
-
-  /* Reduce el tamaño excesivo de la caja del logo en celulares */
-  .logoBox {
-    padding: 8px 14px;
-    border-radius: 8px;
-    margin-bottom: 0;
-    box-shadow: none;
-  }
-  .logoBox img {
-    max-height: 35px;
-    width: auto;
-  }
-
-  /* Oculta por completo el mapa en teléfonos para optimizar espacio */
-  .mapaBox {
-    display: none !important;
-  }
-
-  /* Ajusta los espaciados del contenedor principal */
-  .main {
-    padding: 20px;
-  }
-
-  /* Transforma la grilla de cálculo de 2 columnas a 1 sola columna vertical */
-  .grid2 {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  /* Quita la posición fija del resumen para que fluya de forma natural */
-  .resBox {
-    position: static;
-    padding: 24px;
-  }
-
-  /* Reduce acolchados de tarjetas y tablas para pantallas chicas */
-  .card {
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  th, td {
-    padding: 12px 16px;
-    font-size: 13px;
-  }
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--borde); padding: 14px 20px; flex-direction: row; justify-content: space-between; align-items: center; background: #ffffff; }
+  .logoBox { padding: 8px 14px; border-radius: 8px; margin-bottom: 0; box-shadow: none; }
+  .logoBox img { max-height: 35px; width: auto; }
+  .mapaBox { display: none !important; }
+  .main { padding: 20px; }
+  .grid2 { grid-template-columns: 1fr; gap: 20px; }
+  .resBox { position: static; padding: 24px; }
+  .card { padding: 20px; margin-bottom: 20px; }
+  th, td { padding: 12px 16px; font-size: 13px; }
 }
 </style>
 </head>
@@ -269,11 +216,16 @@ async function login() {
 function parseSheetsCSV(text) {
   const lines = text.split(/\r?\n/);
   const result = [];
+  // CORRECCIÓN AQUÍ: Inicializar variable para evitar crash en producción
+  let currentCell = ''; 
+  
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     const cells = [];
     let insideQuotes = false;
+    currentCell = ''; // Resetear para cada fila
+    
     for (let j = 0; j < line.length; j++) {
       const char = line[j];
       if (char === '"') insideQuotes = !insideQuotes; 
