@@ -21,7 +21,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7fbff;color:va
 .sidebar{background:linear-gradient(180deg,#ffffff,#edf7ff);border-right:1px solid var(--borde);padding:22px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:20px}
 .logoBox{background:white;border-radius:18px;padding:28px;box-shadow:var(--shadow);border:1px solid var(--borde);text-align:center;position:relative;z-index:2}
 .logoBox img{max-width:100%;height:auto;display:block;margin:0 auto}
-.mapaBox {margin-top:auto; text-align:center;} 
+.mapaBox {margin-top:20px; text-align:center;} 
 .mapaBox img {max-width:100%; border-radius:12px; border:1px solid var(--borde); box-shadow:var(--shadow);}
 .menuNav{display:flex;flex-direction:column;gap:8px;position:relative;z-index:2}
 .btnNav{display:flex;align-items:center;gap:12px;padding:12px 16px;background:transparent;border:none;border-radius:12px;color:var(--texto);font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all .2s}
@@ -67,7 +67,7 @@ tr:hover td{background:#f8fafc}
 #msg{color:var(--rojo);font-size:14px;margin-top:16px;min-height:20px}
 .hidden{display:none !important}
 
-/* ADAPTACIÓN CELULARES */
+/* ADAPTACIÓN PARA CELULARES */
 @media (max-width: 768px) {
   .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
   .sidebar { border-right: none; border-bottom: 1px solid var(--borde); padding: 14px 20px; flex-direction: row; justify-content: space-between; align-items: center; background: #ffffff; }
@@ -136,8 +136,10 @@ tr:hover td{background:#f8fafc}
             <h2>Resumen de Venta</h2>
             <div class="resRow sub"><span>Producto</span><span id="resNombre">-</span></div>
             <div class="resRow"><span>Precio Unitario Lista</span><span id="unitario">$0</span></div>
+            
             <div class="resRow hidden" id="boxTapa"><span>Precio Unitario Tapa</span><span id="tapa">$0</span></div>
             <div class="resRow hidden" id="boxSubtotal"><span>Subtotal (Bin+Tapa)</span><span id="subtotal">$0</span></div>
+            
             <div class="resRow"><span>Cantidad</span><span id="resCant">1</span></div>
             <div class="resRow hidden" id="boxDesc"><span>Descuento por Volumen</span><span id="descuento">$0</span></div>
             <div class="resRow total"><span>Total Neto Venta</span><span id="total">$0</span></div>
@@ -185,7 +187,6 @@ async function login() {
   try {
     msgEl.textContent = 'Autenticando...';
     const ciphertext = usuariosHabilitados[u];
-    
     const bytes = CryptoJS.AES.decrypt(ciphertext, p);
     const decryptedSheetId = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -195,7 +196,6 @@ async function login() {
     }
 
     msgEl.textContent = 'Conectando con Google Sheets...';
-
     const url = `https://docs.google.com/spreadsheets/d/${decryptedSheetId}/gviz/tq?tqx=out:csv`;
     
     const response = await fetch(url);
@@ -216,7 +216,6 @@ async function login() {
 function parseSheetsCSV(text) {
   const lines = text.split(/\r?\n/);
   const result = [];
-  // CORRECCIÓN AQUÍ: Inicializar variable para evitar crash en producción
   let currentCell = ''; 
   
   for (let i = 1; i < lines.length; i++) {
@@ -224,7 +223,7 @@ function parseSheetsCSV(text) {
     if (!line) continue;
     const cells = [];
     let insideQuotes = false;
-    currentCell = ''; // Resetear para cada fila
+    currentCell = ''; 
     
     for (let j = 0; j < line.length; j++) {
       const char = line[j];
@@ -250,8 +249,6 @@ function money(n){ return '$' + Math.round(n).toLocaleString('es-CL'); }
 
 function familiaProducto(p){
   if(p.familia && p.familia !== 'GENERAL') return p.familia;
-  if(p.codigo.startsWith('CP')) return 'Contrapesos';
-  if(p.codigo.startsWith('BIN')) return 'BINS';
   return 'Otros';
 }
 
@@ -276,15 +273,36 @@ function calcular(){
   if(!p) return;
 
   const cant = parseInt(document.getElementById('cantidad').value) || 1;
-  const fam = familiaProducto(p);
-  const bin = fam === 'BINS';
+  const fam = familiaProducto(p).toUpperCase();
+  const bin = (fam === 'BIN' || fam === 'BINS');
 
   let unitario = p.precio;
   let precioTapa = 0;
   let desc = 0;
+  let tieneTapa = false;
 
   if(bin){
-    precioTapa = 28000;
+    // PASO 1: Buscar tapa con nombre exacto (Ej: "TAPA BIN INDUSTRIAL 800")
+    let prodTapa = productos.find(x => x.familia && x.familia.toUpperCase() === 'TAPA BIN' && x.nombre.toUpperCase() === 'TAPA ' + p.nombre.toUpperCase());
+    
+    // PASO 2: Si no existe, búsqueda inteligente para variaciones (Ej: Tapa "TAPA BIN REEFER" calza con "BIN REEFER 1000")
+    if (!prodTapa) {
+      prodTapa = productos.find(x => {
+        if (x.familia && x.familia.toUpperCase() === 'TAPA BIN') {
+          const baseTapa = x.nombre.toUpperCase().replace('TAPA ', '').trim();
+          return p.nombre.toUpperCase().startsWith(baseTapa);
+        }
+        return false;
+      });
+    }
+
+    // PASO 3: Si encontró alguna tapa, guarda su precio y confirma que existe
+    if(prodTapa){
+      precioTapa = prodTapa.precio;
+      tieneTapa = true;
+    }
+
+    // Calcula descuentos (se aplica a todos los bins sin importar si llevan tapa o no)
     if(cant >= 51) desc = 0.08;
     else if(cant >= 21) desc = 0.05;
     else if(cant >= 11) desc = 0.03;
@@ -304,10 +322,15 @@ function calcular(){
   if(document.getElementById('subtotal')) document.getElementById('subtotal').textContent = money(subtotalUnidad);
   if(document.getElementById('descuento')) document.getElementById('descuento').textContent = '-' + money(montoDesc);
 
-  ['boxTapa','boxSubtotal','boxDesc'].forEach(id => {
+  // Mostrar Tapa y Subtotal SOLO si es Bin Y tiene tapa asociada
+  ['boxTapa','boxSubtotal'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.classList.toggle('hidden', !bin);
+    if(el) el.classList.toggle('hidden', !(bin && tieneTapa));
   });
+
+  // El descuento se muestra siempre para los Bins
+  const elDesc = document.getElementById('boxDesc');
+  if(elDesc) elDesc.classList.toggle('hidden', !bin);
 }
 
 function cargarTabla(){
